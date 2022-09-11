@@ -1,34 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+import { HangImage } from "./components/Hangimage";
+import { letters } from "./helpers/letters";
+import { getRandomWord } from "./helpers/getRandomWords";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [word, setWord] = useState(getRandomWord());
+  const [attempts, setAttempts] = useState(0);
+  const [hiddenWord, setHiddenWord] = useState("_ ".repeat(word.length));
+  const [lose, setLose] = useState(false);
+  const [won, setWon] = useState(false);
 
+  // Determinar si la persona perdió
+  useEffect(() => {
+    if (attempts >= 9) {
+      setLose(true);
+    }
+  }, [attempts]);
+
+  // Determinar si la persona ganó
+  useEffect(() => {
+    const currentHiddenWord = hiddenWord.split(" ").join("");
+    if (currentHiddenWord === word) {
+      setWon(true);
+    }
+  }, [hiddenWord]);
+  const checkLetter = (letter: string) => {
+    if (lose) return;
+    if (won) return;
+    if (!word.includes(letter)) {
+      setAttempts(Math.min(attempts + 1, 9));
+      return;
+    }
+    const hiddenWordArray = hiddenWord.split(" ");
+
+    for (let i = 0; i < word.length; i++) {
+      if (word[i] === letter) {
+        hiddenWordArray[i] = letter;
+      }
+    }
+    setHiddenWord(hiddenWordArray.join(" "));
+  };
+  const newGame = () => {
+    const newWord = getRandomWord();
+
+    setWord(newWord);
+    setHiddenWord("_ ".repeat(newWord.length));
+
+    setAttempts(0);
+    setLose(false);
+    setWon(false);
+  };
   return (
     <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+      {/* Imágenes */}
+      <HangImage imageNumber={attempts} />
+      {/* Palabra oculta */}
+      <h3>{hiddenWord}</h3>
+      {/* Contador de intentos */}
+      <h3>intentos: {attempts} </h3>
+      {/* Mensaje si perdio */}
+      {lose ? <h2>Perdió {word}!</h2> : ""}
+      {/* Mensaje si ganó */}
+      {won ? <h2>Felicidades, usted ganó</h2> : ""}
+      {/* Botones de letras */}
+      {letters.map((letter) => (
+        <button onClick={() => checkLetter(letter)} key={letter}>
+          {letter}
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      ))}
+
+      <br />
+      <br />
+      <button onClick={newGame}>¿Nuevo juego?</button>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
